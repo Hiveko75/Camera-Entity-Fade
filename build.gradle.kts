@@ -119,19 +119,10 @@ if (isForge || (isNeoforge && stonecutter.current.parsed < "1.21")) {
     }
 }
 
-val perspectiveApiDir =
-    System.getenv("PERSPECTIVE_API_DIR") ?: System.getProperty("PERSPECTIVE_API_DIR")
-
 dependencies {
-    if (!perspectiveApiDir.isNullOrBlank()) {
-        modstitchModImplementation(
-            "io.github.leawind.perspectiveapi:perspective_api:0.0-SNAPSHOT+$loader-$mcVersion"
-        )
-    } else {
-        modstitchModImplementation(
-            "maven.modrinth:LIqveQm1:${requiredProp("mod.perspective_api_version")}+$loader-$mcVersion"
-        )
-    }
+    modstitchModImplementation(
+        "maven.modrinth:LIqveQm1:${requiredProp("mod.perspective_api_version")}+$loader-$mcVersion"
+    )
 
     optionalProp("deps.fabricApi") {
         modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:$it")

@@ -66,7 +66,7 @@ public final class CameraEntityFadeRuntime {
 
   private static boolean hasThirdPersonTrait() {
     try {
-      return PerspectiveAPI.getCurrent().hasTrait(THIRD_PERSON_TRAIT);
+      return PerspectiveAPI.getCurrent().info().hasTrait(THIRD_PERSON_TRAIT);
     } catch (IllegalStateException ignored) {
       return false;
     }

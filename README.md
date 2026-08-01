@@ -14,9 +14,6 @@ Build every supported Minecraft/loader variant:
 ./gradlew buildAndCollect
 ```
 
-To build against a locally published Perspective API snapshot, set
-`PERSPECTIVE_API_DIR` to the Perspective API repository path.
-
 ## License
 
 [MIT](LICENSE.txt)
