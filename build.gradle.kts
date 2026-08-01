@@ -157,8 +157,6 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-parameters")
 }
 
-java { withSourcesJar() }
-
 tasks.withType<Jar>().configureEach {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
@@ -178,11 +176,9 @@ if (isForge) {
     }
 }
 
-val sourcesJar = tasks.named<Jar>("sourcesJar")
 rootProject.tasks.named<Sync>("buildAndCollect") {
-    dependsOn(modstitch.finalJarTask, sourcesJar)
+    dependsOn(modstitch.finalJarTask)
     from(modstitch.finalJarTask.flatMap { it.archiveFile })
-    from(sourcesJar.flatMap { it.archiveFile })
 }
 
 val changelogFile = rootProject.file("CHANGELOG.md")
@@ -193,7 +189,6 @@ afterEvaluate {
         dryRun.set(System.getenv("DRY_RUN") != "false")
         displayName.set("$modVersionValue for $mcVersion $loader")
         file = modstitch.finalJarTask.flatMap { it.archiveFile }
-        additionalFiles.from(tasks.named("sourcesJar"))
         changelog.set(changelogText)
         type = when {
             modVersionValue.contains("beta", true) -> BETA
