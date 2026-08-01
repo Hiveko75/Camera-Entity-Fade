@@ -86,6 +86,10 @@ modstitch {
         replacementProperties.put("github", modSourceUrlValue.removePrefix("https://github.com/"))
         replacementProperties.put("mc", minecraftDependency)
         replacementProperties.put("loaderVersion", "*")
+        replacementProperties.put(
+            "perspectiveApiVersion",
+            requiredProp("mod.perspective_api_version"),
+        )
     }
 
     mixin {
