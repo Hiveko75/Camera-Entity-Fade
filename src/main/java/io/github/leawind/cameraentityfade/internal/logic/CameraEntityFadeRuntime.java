@@ -3,6 +3,7 @@ package io.github.leawind.cameraentityfade.internal.logic;
 import io.github.leawind.cameraentityfade.CameraEntityFade;
 import io.github.leawind.cameraentityfade.internal.bridge.Bridge;
 import io.github.leawind.cameraentityfade.internal.bridge.events.CameraEntityOpacityEvent;
+import io.github.leawind.cameraentityfade.internal.bridge.events.ClientTickEvent;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -30,6 +31,7 @@ public final class CameraEntityFadeRuntime {
     }
     initialized = true;
     CameraEntityOpacityEvent.register(this::sampleOpacity);
+    ClientTickEvent.register(this::onClientTick);
     CameraEntityFade.LOGGER.info("{} initialized", CameraEntityFade.MOD_NAME);
   }
 
