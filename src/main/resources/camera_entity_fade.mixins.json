@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "io.github.leawind.cameraentityfade.internal.bridge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "refmap": "camera_entity_fade.refmap.json",
+  "client": ["MinecraftMixin"],
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,253 @@
+import org.gradle.jvm.tasks.Jar
+
+plugins {
+    id("dev.kikugie.stonecutter")
+    id("dev.isxander.modstitch.base")
+    `maven-publish`
+    id("me.modmuss50.mod-publish-plugin")
+}
+
+val mcVersion: String by project
+val modGroupValue = requiredProp("mod.group")
+val modIdValue = requiredProp("mod.id")
+val modVersionValue = requiredProp("mod.version")
+val modNameValue = requiredProp("mod.name")
+val modDescriptionValue = requiredProp("mod.description")
+val modAuthorValue = requiredProp("mod.author")
+val modLicenseValue = requiredProp("mod.license")
+val modSourceUrlValue = requiredProp("mod.source_url")
+val minecraftDependency = requiredProp("meta.mcDep")
+
+val isFabric = modstitch.isLoom
+val isNeoforge = modstitch.isModDevGradleRegular
+val isForge = modstitch.isModDevGradleLegacy
+val loader = when {
+    isFabric -> "fabric"
+    isNeoforge -> "neoforge"
+    isForge -> "forge"
+    else -> error("Unknown loader")
+}
+
+// Select by the configured source version. Runtime class-resource names are namespace-dependent on
+// older Fabric versions and therefore cannot safely identify the rendering pipeline.
+val usesExtractedEntityRenderState = stonecutter.current.parsed >= "1.21.11"
+val renderingMixinConfig =
+    if (usesExtractedEntityRenderState) "camera_entity_fade.extracted"
+    else "camera_entity_fade.direct"
+
+val publishedMinecraftVersions = buildList {
+    add(mcVersion)
+    findProperty("publish.additionalMcVersions")
+        ?.toString()
+        ?.split(',')
+        ?.map(String::trim)
+        ?.filter(String::isNotEmpty)
+        ?.forEach(::add)
+}.distinct()
+val supportsUnitTesting = isFabric || (isNeoforge && stonecutter.current.parsed >= "1.20.5")
+
+modstitch {
+    minecraftVersion = mcVersion
+
+    loom {
+        if (isFabric) {
+            fabricLoaderVersion = requiredProp("deps.fabricLoader")
+            configureLoom {
+                runs.named("client") {
+                    runDir = project.relativePath(rootProject.file("run"))
+                }
+            }
+        }
+    }
+
+    if (!isFabric) {
+        runs {
+            register("client") {
+                client()
+                gameDirectory.set(rootProject.layout.projectDirectory.dir("run"))
+            }
+        }
+    }
+
+    moddevgradle {
+        if (isNeoforge) neoForgeVersion = requiredProp("deps.neoforge")
+        if (isForge) forgeVersion = requiredProp("deps.forge")
+    }
+
+    metadata {
+        modId = modIdValue
+        modName = modNameValue
+        modVersion = "$modVersionValue+$loader-$mcVersion"
+        modGroup = modGroupValue
+        modDescription = modDescriptionValue
+        modLicense = modLicenseValue
+        modAuthor = modAuthorValue
+
+        replacementProperties.put("github", modSourceUrlValue.removePrefix("https://github.com/"))
+        replacementProperties.put("mc", minecraftDependency)
+        replacementProperties.put("loaderVersion", "*")
+    }
+
+    mixin {
+        addMixinsToModManifest = true
+        configs.register("camera_entity_fade")
+        configs.register(renderingMixinConfig)
+    }
+
+    if (supportsUnitTesting) unitTesting()
+}
+
+stonecutter {
+    constants {
+        put("fabric", isFabric)
+        put("neoforge", isNeoforge)
+        put("forge", isForge)
+    }
+
+    replacements.string(current.parsed >= "1.21.11") {
+        replace("net.minecraft.resources.ResourceLocation", "net.minecraft.resources.Identifier")
+        replace("ResourceLocation", "Identifier")
+    }
+}
+
+if (isForge || (isNeoforge && stonecutter.current.parsed < "1.21")) {
+    configurations.configureEach {
+        resolutionStrategy {
+            force("org.apache.logging.log4j:log4j-api:2.24.3")
+            force("org.apache.logging.log4j:log4j-core:2.24.3")
+        }
+    }
+}
+
+val perspectiveApiDir =
+    System.getenv("PERSPECTIVE_API_DIR") ?: System.getProperty("PERSPECTIVE_API_DIR")
+
+dependencies {
+    if (!perspectiveApiDir.isNullOrBlank()) {
+        modstitchModImplementation(
+            "io.github.leawind.perspectiveapi:perspective_api:0.0-SNAPSHOT+$loader-$mcVersion"
+        )
+    } else {
+        modstitchModImplementation(
+            "maven.modrinth:LIqveQm1:${requiredProp("mod.perspective_api_version")}+$loader-$mcVersion"
+        )
+    }
+
+    optionalProp("deps.fabricApi") {
+        modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:$it")
+    }
+
+    compileOnly("org.jspecify:jspecify:1.0.0")
+    compileOnly("org.jetbrains:annotations:24.0.1")
+
+    testCompileOnly("org.jspecify:jspecify:1.0.0")
+    if (!isFabric) testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.3")
+}
+
+tasks.withType<JavaExec>().configureEach {
+    if (name == "runClient") workingDir(rootProject.layout.projectDirectory.dir("run"))
+}
+
+tasks.test {
+    useJUnitPlatform()
+    if (!supportsUnitTesting) enabled = false
+}
+
+tasks.named("check") {
+    dependsOn(rootProject.tasks.named("checkArchitecture"))
+}
+
+if (!supportsUnitTesting) {
+    tasks.compileTestJava { enabled = false }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-parameters")
+}
+
+java { withSourcesJar() }
+
+tasks.withType<Jar>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.withType<ProcessResources>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    inputs.property("renderingMixinConfig", renderingMixinConfig)
+    exclude(
+        if (usesExtractedEntityRenderState) "camera_entity_fade.direct.mixins.json"
+        else "camera_entity_fade.extracted.mixins.json"
+    )
+}
+
+if (isForge) {
+    tasks.named<ProcessResources>("processResources") {
+        exclude("camera_entity_fade.refmap.json")
+    }
+}
+
+val sourcesJar = tasks.named<Jar>("sourcesJar")
+rootProject.tasks.named<Sync>("buildAndCollect") {
+    dependsOn(modstitch.finalJarTask, sourcesJar)
+    from(modstitch.finalJarTask.flatMap { it.archiveFile })
+    from(sourcesJar.flatMap { it.archiveFile })
+}
+
+val changelogFile = rootProject.file("CHANGELOG.md")
+val changelogText = if (changelogFile.exists()) changelogFile.readText() else ""
+
+afterEvaluate {
+    publishMods {
+        dryRun.set(System.getenv("DRY_RUN") != "false")
+        displayName.set("$modVersionValue for $mcVersion $loader")
+        file = modstitch.finalJarTask.flatMap { it.archiveFile }
+        additionalFiles.from(tasks.named("sourcesJar"))
+        changelog.set(changelogText)
+        type = when {
+            modVersionValue.contains("beta", true) -> BETA
+            modVersionValue.contains("alpha", true) -> ALPHA
+            else -> STABLE
+        }
+        modLoaders.add(loader)
+
+        modrinth {
+            accessToken = System.getenv("MODRINTH_TOKEN")
+            projectId = System.getenv("MODRINTH_ID")
+            minecraftVersions.addAll(publishedMinecraftVersions)
+            requires("perspective-api")
+            if (isFabric) requires("fabric-api")
+        }
+        curseforge {
+            accessToken = System.getenv("CURSEFORGE_TOKEN")
+            projectId = System.getenv("CURSEFORGE_ID")
+            minecraftVersions.addAll(publishedMinecraftVersions)
+            clientRequired = true
+            serverRequired = false
+            requires("perspective-api")
+            if (isFabric) requires("fabric-api")
+        }
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            artifactId = modIdValue
+            version = "$modVersionValue+$loader-$mcVersion"
+            from(components["java"])
+            pom {
+                name.set(modNameValue)
+                description.set(modDescriptionValue)
+            }
+        }
+    }
+    repositories { mavenLocal() }
+}
+
+fun requiredProp(property: String): String =
+    findProperty(property)?.toString()?.takeIf { it.isNotBlank() }
+        ?: error("Required Gradle property '$property' is missing or blank")
+
+fun <T> optionalProp(property: String, block: (String) -> T?): T? =
+    findProperty(property)?.toString()?.takeIf { it.isNotBlank() }?.let(block)

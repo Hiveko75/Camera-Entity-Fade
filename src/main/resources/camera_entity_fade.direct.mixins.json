@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "package": "io.github.leawind.cameraentityfade.internal.bridge.mixin.cameraentityopacity",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "refmap": "camera_entity_fade.refmap.json",
+  "client": [
+    "CapeLayerMixin",
+    "GameRendererMixin",
+    "LevelRendererMixin",
+    "LivingEntityRendererMixin",
+    "ModelPartCubeMixin",
+    "ModelPartMixin",
+    "RenderTypeMixin"
+  ],
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
