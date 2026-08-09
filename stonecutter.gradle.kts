@@ -10,11 +10,22 @@ stonecutter active "26.2-fabric"
 
 val checkArchitecture by tasks.registering {
     group = "verification"
-    description = "Checks that rendering bridges remain independent of policy logic."
+    description = "Checks source architecture and forbidden Mixin injectors."
     val sourceRoot = layout.projectDirectory.dir("src/main/java")
     inputs.dir(sourceRoot)
     doLast {
         val violations = mutableListOf<String>()
+        fileTree(sourceRoot).matching { include("**/*.java") }.files.sorted().forEach { source ->
+            source.readLines().forEachIndexed { index, line ->
+                if (line.contains("@Redirect")
+                    || line.contains("org.spongepowered.asm.mixin.injection.Redirect")
+                ) {
+                    violations.add(
+                        "${source.name}:${index + 1}: Mixin @Redirect is forbidden; use a composable injector"
+                    )
+                }
+            }
+        }
         fileTree(sourceRoot).matching {
             include("io/github/leawind/cameraentityfade/internal/bridge/**/*.java")
         }.files.sorted().forEach { source ->

@@ -134,6 +134,11 @@ dependencies {
 
     compileOnly("org.jspecify:jspecify:1.0.0")
     compileOnly("org.jetbrains:annotations:24.0.1")
+    // Forge does not provide MixinExtras on the compile classpath. Perspective API embeds and
+    // initializes its Forge runtime artifact, so this module only needs the common API and AP.
+    val mixinExtrasCommon = "io.github.llamalad7:mixinextras-common:0.5.4"
+    compileOnly(mixinExtrasCommon)
+    if (isForge) annotationProcessor(mixinExtrasCommon)
 
     testCompileOnly("org.jspecify:jspecify:1.0.0")
     if (!isFabric) testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")

@@ -10,6 +10,7 @@
     "EntityRendererMixin",
     "GameRendererMixin",
     "LivingEntityRendererMixin",
+    "RenderTypeAccessor",
     "RenderTypesMixin",
     "SubmitNodeCollectionMixin"
   ],

@@ -2,6 +2,7 @@
 package io.github.leawind.cameraentityfade.internal.bridge.mixin.cameraentityopacity;
 
 import io.github.leawind.cameraentityfade.internal.bridge.CameraEntityRenderState;
+import io.github.leawind.cameraentityfade.internal.bridge.CameraEntityRenderTypes;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
@@ -16,7 +17,7 @@ abstract class RenderTypesMixin {
   private static void useTranslucentCameraEntityArmor(
       Identifier texture, CallbackInfoReturnable<RenderType> ci) {
     if (CameraEntityRenderState.isApplyingTransparency()) {
-      ci.setReturnValue(RenderTypes.armorTranslucent(texture));
+      ci.setReturnValue(CameraEntityRenderTypes.armorTranslucentItemTarget(texture));
     }
   }
 }

@@ -4,7 +4,9 @@ import io.github.leawind.cameraentityfade.CameraEntityFade;
 import io.github.leawind.cameraentityfade.internal.bridge.Bridge;
 import io.github.leawind.cameraentityfade.internal.bridge.events.CameraEntityOpacityEvent;
 import io.github.leawind.cameraentityfade.internal.bridge.events.ClientTickEvent;
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 
@@ -41,7 +43,7 @@ public final class CameraEntityFadeRuntime {
     if (minecraft.level == null
         || cameraEntity == null
         || cameraEntity.isSpectator()
-        || !hasThirdPersonTrait()) {
+        || !usesThirdPersonCamera()) {
       deactivate();
       return;
     }
@@ -64,9 +66,14 @@ public final class CameraEntityFadeRuntime {
     }
   }
 
-  private static boolean hasThirdPersonTrait() {
+  private static boolean usesThirdPersonCamera() {
     try {
-      return PerspectiveAPI.getCurrent().info().hasTrait(THIRD_PERSON_TRAIT);
+      Perspective current = PerspectiveAPI.getCurrent();
+      if (current == null) {
+        return false;
+      }
+      var info = current.info();
+      return info.hasTrait(THIRD_PERSON_TRAIT) || info.baseType() != BaseType.FIRST_PERSON;
     } catch (IllegalStateException ignored) {
       return false;
     }
