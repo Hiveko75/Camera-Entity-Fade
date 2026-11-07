@@ -62,14 +62,20 @@ public final class CameraEntityFadeRuntime {
     opacity.update(CLIENT_TICK_SECONDS, OPACITY_HALF_LIFE_SECONDS);
   }
 
-  /// True when the ray through the crosshair hits the camera entity's bounding box.
+  /// True when the ray through the crosshair hits the central part of the camera entity's bounding
+  /// box (see CROSSHAIR_WIDTH_FRACTION / CROSSHAIR_HEIGHT_FRACTION), not just its edge.
   private static boolean crosshairOnEntity(Minecraft minecraft, Vec3 cameraPosition, AABB bounds) {
     Vec3 forward = Bridge.cameraForward(minecraft);
     if (forward == null || bounds.contains(cameraPosition)) {
       return false;
     }
+    AABB core =
+        bounds.deflate(
+            bounds.getXsize() * (1.0 - CameraEntityOpacityPolicy.CROSSHAIR_WIDTH_FRACTION) / 2.0,
+            bounds.getYsize() * (1.0 - CameraEntityOpacityPolicy.CROSSHAIR_HEIGHT_FRACTION) / 2.0,
+            bounds.getZsize() * (1.0 - CameraEntityOpacityPolicy.CROSSHAIR_WIDTH_FRACTION) / 2.0);
     Vec3 end = cameraPosition.add(forward.scale(CameraEntityOpacityPolicy.CROSSHAIR_RAY_LENGTH));
-    return bounds.clip(cameraPosition, end).isPresent();
+    return core.clip(cameraPosition, end).isPresent();
   }
 
   float sampleOpacity(float partialTick) {

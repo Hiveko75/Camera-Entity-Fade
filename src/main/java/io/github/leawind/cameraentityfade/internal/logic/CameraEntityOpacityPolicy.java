@@ -10,6 +10,13 @@ final class CameraEntityOpacityPolicy {
   /// Target opacity while the crosshair points at the camera entity (lower = more see-through).
   static final double CROSSHAIR_OPACITY = 0.25;
 
+  /// Part of the entity's hitbox that counts as "crosshair on the entity", centred on the entity.
+  /// 1.0 = the whole hitbox (fades as soon as the crosshair touches its edge); smaller values make
+  /// the crosshair get closer to the middle of the player before it fades.
+  static final double CROSSHAIR_WIDTH_FRACTION = 0.5;
+
+  static final double CROSSHAIR_HEIGHT_FRACTION = 0.8;
+
   /// How far along the crosshair ray the camera entity is looked for, in blocks.
   static final double CROSSHAIR_RAY_LENGTH = 32.0;
 
