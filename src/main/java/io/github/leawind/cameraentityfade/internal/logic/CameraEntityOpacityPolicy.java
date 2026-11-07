@@ -7,6 +7,12 @@ final class CameraEntityOpacityPolicy {
   // Raised from 0.64 so the fade starts a little further away from the entity.
   static final double FADE_DISTANCE = 1.0;
 
+  /// Target opacity while the crosshair points at the camera entity (lower = more see-through).
+  static final double CROSSHAIR_OPACITY = 0.25;
+
+  /// How far along the crosshair ray the camera entity is looked for, in blocks.
+  static final double CROSSHAIR_RAY_LENGTH = 32.0;
+
   private CameraEntityOpacityPolicy() {}
 
   static double targetOpacity(double distanceToBounds) {

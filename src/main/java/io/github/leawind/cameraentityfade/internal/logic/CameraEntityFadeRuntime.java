@@ -9,6 +9,8 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /// Owns the client-tick policy and the render-sampled opacity state.
 public final class CameraEntityFadeRuntime {
@@ -49,10 +51,25 @@ public final class CameraEntityFadeRuntime {
     }
 
     active = true;
-    double distanceToBounds =
-        Math.sqrt(cameraEntity.getBoundingBox().distanceToSqr(Bridge.cameraPosition(minecraft)));
-    opacity.setTarget(CameraEntityOpacityPolicy.targetOpacity(distanceToBounds));
+    Vec3 cameraPosition = Bridge.cameraPosition(minecraft);
+    AABB bounds = cameraEntity.getBoundingBox();
+    double distanceToBounds = Math.sqrt(bounds.distanceToSqr(cameraPosition));
+    double target = CameraEntityOpacityPolicy.targetOpacity(distanceToBounds);
+    if (crosshairOnEntity(minecraft, cameraPosition, bounds)) {
+      target = Math.min(target, CameraEntityOpacityPolicy.CROSSHAIR_OPACITY);
+    }
+    opacity.setTarget(target);
     opacity.update(CLIENT_TICK_SECONDS, OPACITY_HALF_LIFE_SECONDS);
+  }
+
+  /// True when the ray through the crosshair hits the camera entity's bounding box.
+  private static boolean crosshairOnEntity(Minecraft minecraft, Vec3 cameraPosition, AABB bounds) {
+    Vec3 forward = Bridge.cameraForward(minecraft);
+    if (forward == null || bounds.contains(cameraPosition)) {
+      return false;
+    }
+    Vec3 end = cameraPosition.add(forward.scale(CameraEntityOpacityPolicy.CROSSHAIR_RAY_LENGTH));
+    return bounds.clip(cameraPosition, end).isPresent();
   }
 
   float sampleOpacity(float partialTick) {
