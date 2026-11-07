@@ -23,7 +23,42 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(value = CapeLayer.class, priority = 500)
 abstract class CapeLayerMixin {
-  /*? if >=1.21.11 {*/
+  /*? if >=26.3 {*/
+  /*@WrapOperation(
+      method = "submit",
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;III)V"),
+      require = 0)
+  private void useTranslucentCameraEntityCape(
+      SubmitNodeCollector collector,
+      Model<?> model,
+      Object stateObject,
+      PoseStack poseStack,
+      RenderType renderType,
+      int lightCoords,
+      int overlayCoords,
+      int outlineColor,
+      Operation<Void> original) {
+    if (CameraEntityRenderState.isApplyingTransparency()) {
+      AvatarRenderState state = (AvatarRenderState) stateObject;
+      renderType =
+          CameraEntityRenderTypes.entityTranslucentItemTarget(
+              state.skin.cape().texturePath());
+    }
+    original.call(
+        collector,
+        model,
+        stateObject,
+        poseStack,
+        renderType,
+        lightCoords,
+        overlayCoords,
+        outlineColor);
+  }
+  *//*? } else if >=1.21.11 {*/
   @WrapOperation(
       method = "submit",
       at =

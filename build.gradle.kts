@@ -124,9 +124,16 @@ if (isForge || (isNeoforge && stonecutter.current.parsed < "1.21")) {
 }
 
 dependencies {
-    modstitchModImplementation(
-        "maven.modrinth:LIqveQm1:${requiredProp("mod.perspective_api_version")}+$loader-$mcVersion"
-    )
+    if (stonecutter.current.parsed >= "26.3") {
+        // Not on Modrinth yet: the 26.3 backport of Perspective API is installed into Maven Local.
+        modstitchModImplementation(
+            "io.github.leawind.perspectiveapi:perspective_api:${requiredProp("mod.perspective_api_version")}+$loader-$mcVersion"
+        )
+    } else {
+        modstitchModImplementation(
+            "maven.modrinth:LIqveQm1:${requiredProp("mod.perspective_api_version")}+$loader-$mcVersion"
+        )
+    }
 
     optionalProp("deps.fabricApi") {
         modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:$it")
