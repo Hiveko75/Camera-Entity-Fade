@@ -1,7 +1,7 @@
 name: Build
+# Started by hand only (Actions -> Run workflow): no builds on push or pull requests.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions: read-all
 
