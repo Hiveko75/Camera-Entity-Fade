@@ -8,6 +8,10 @@ permissions: read-all
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,3 +36,10 @@ jobs:
         with:
           name: Artifacts
           path: versions/*/build/libs/*.jar
+          retention-days: 14
+
+      - name: Attest build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest@v4
+        with:
+          subject-path: 'versions/*/build/libs/*.jar'
